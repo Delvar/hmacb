@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HMACB Archive</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 0; background: #0f1117; color: #e6e6e6; }
+    header { background: #1a1d27; padding: 1.5rem 2rem; border-bottom: 1px solid #2a2e3a; }
+    h1 { margin: 0; font-size: 1.4rem; }
+    .subtitle { color: #9aa0b0; font-size: 0.9rem; margin-top: 0.25rem; }
+    .container { display: flex; height: calc(100vh - 80px); }
+    .sidebar { width: 380px; border-right: 1px solid #2a2e3a; overflow-y: auto; padding: 1rem; }
+    .main { flex: 1; padding: 1.5rem 2rem; overflow-y: auto; }
+    #search { width: 100%; padding: 0.6rem; margin-bottom: 1rem; background: #1a1d27; border: 1px solid #2a2e3a; color: #e6e6e6; border-radius: 4px; }
+    .item { padding: 0.75rem; border-bottom: 1px solid #2a2e3a; cursor: pointer; }
+    .item:hover { background: #1a1d27; }
+    .item.active { background: #252836; }
+    .item-title { font-weight: 600; }
+    .item-meta { font-size: 0.8rem; color: #9aa0b0; margin-top: 0.25rem; }
+    .badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 3px; font-size: 0.75rem; margin-right: 0.4rem; }
+    .danger-low { background: #1e3a2f; color: #6ee7b7; }
+    .danger-medium { background: #3a2e1e; color: #fbbf24; }
+    .danger-high { background: #3a1e1e; color: #f87171; }
+    #report { max-width: 800px; }
+    #report h1, #report h2, #report h3 { color: #f3f4f6; }
+    #report hr { border-color: #2a2e3a; }
+    #report strong { color: #f3f4f6; }
+    .placeholder { color: #9aa0b0; text-align: center; margin-top: 4rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Her Majesty's Anomalous Containment Bureau</h1>
+    <div class="subtitle">Est. 1847 · Official Archive</div>
+  </header>
+  <div class="container">
+    <div class="sidebar">
+      <input type="text" id="search" placeholder="Search designation, ID, classification…">
+      <div id="list"></div>
+    </div>
+    <div class="main">
+      <div id="report" class="placeholder">Select an item to view the containment log.</div>
+    </div>
+  </div>
+
+  <script>
+    let items = [];
+
+    async function loadCatalogue() {
+      const res = await fetch('data/catalogue.json');
+      items = await res.json();
+      // Sort newest first
+      items.sort((a, b) => b.date.localeCompare(a.date));
+      renderList(items);
+    }
+
+    function renderList(list) {
+      const container = document.getElementById('list');
+      container.innerHTML = list.map((item, i) => `
+        <div class="item" data-index="${i}" data-path="${item.path}">
+          <div class="item-title">${item.designation}</div>
+          <div class="item-meta">
+            <span class="badge danger-${item.danger_level.toLowerCase()}">${item.danger_level}</span>
+            ${item.item_id} · ${item.classification} · ${item.date}
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.item').forEach(el => {
+        el.addEventListener('click', () => loadReport(el.dataset.path, el));
+      });
+    }
+
+    async function loadReport(path, el) {
+      document.querySelectorAll('.item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+
+      const res = await fetch(path);
+      const md = await res.text();
+      // Strip YAML frontmatter
+      const content = md.replace(/^---[\s\S]*?---\n/, '');
+      document.getElementById('report').innerHTML = marked.parse(content);
+      document.getElementById('report').classList.remove('placeholder');
+    }
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      const filtered = items.filter(item =>
+        item.designation.toLowerCase().includes(q) ||
+        item.item_id.toLowerCase().includes(q) ||
+        item.classification.toLowerCase().includes(q) ||
+        item.danger_level.toLowerCase().includes(q) ||
+        item.status.toLowerCase().includes(q)
+      );
+      renderList(filtered);
+    });
+
+    loadCatalogue();
+  </script>
+</body>
+</html>
