@@ -1,0 +1,20 @@
+[
+  {
+    "date": "2026-10-17",
+    "item_id": "498-1923-DIM",
+    "designation": "The Shunted Waymarker",
+    "classification": "DIM",
+    "danger_level": "Medium",
+    "status": "Contained",
+    "path": "reports/2026/2026-10-17-item-498-the-shunted-waymarker.md"
+  },
+  {
+    "date": "2025-09-03",
+    "item_id": "474-2025-MAG",
+    "designation": "The Cindered Quill",
+    "classification": "MAG",
+    "danger_level": "Low",
+    "status": "Contained",
+    "path": "reports/2025/2025-09-03-item-474-the-cindered-quill.md"
+  }
+]
